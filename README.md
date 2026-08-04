@@ -67,6 +67,10 @@ All three use `withRetry` (exponential backoff, 3 attempts) around their Laravel
 
 `/api/notifications`, `/api/analytics`, and `/api/export` are all throttled via `express-rate-limit`: **60 requests/minute per IP**. Exceeding it returns `429` with `{ "message": "Too many requests, please try again later." }` and standard `RateLimit-*` headers.
 
+## Request/response logging (bonus)
+
+Every request is logged (one JSON line per request, via `console.log`) by `requestLogger` middleware in `src/app.js` — method, path, response status, duration in ms, authenticated user id (`null` if unauthenticated), and IP. The request body is never logged, so notification payloads/tokens can't leak into stdout or Render's log stream.
+
 ## API docs (Swagger/OpenAPI)
 
 See `/api-docs` once the server is running (generated from JSDoc comments via `swagger-jsdoc` + `swagger-ui-express`).
@@ -77,7 +81,7 @@ See `/api-docs` once the server is running (generated from JSDoc comments via `s
 npm test
 ```
 
-24 Jest tests covering JWT/internal-token middleware (accept/reject paths), the in-memory cache's TTL behavior, notification template building, unauthenticated-access rejection on every protected route, and rate limiting (429 after the limit, `RateLimit-*` headers, shared budget across routes, unaffected `/health`).
+26 Jest tests covering JWT/internal-token middleware (accept/reject paths), the in-memory cache's TTL behavior, notification template building, unauthenticated-access rejection on every protected route, rate limiting (429 after the limit, `RateLimit-*` headers, shared budget across routes, unaffected `/health`), and request/response logging (status/user captured, body never logged).
 
 ## Deployment
 

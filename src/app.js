@@ -6,6 +6,7 @@ import notificationsRouter from './routes/notifications.js';
 import analyticsRouter from './routes/analytics.js';
 import exportRouter from './routes/export.js';
 import swaggerSpec from './config/swagger.js';
+import { requestLogger } from './middleware/requestLogger.js';
 
 export function createApp() {
   const app = express();
@@ -23,6 +24,7 @@ export function createApp() {
 
   app.use(cors());
   app.use(express.json());
+  app.use(requestLogger);
 
   app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
