@@ -42,7 +42,7 @@ Endpoints Node itself exposes:
 
 ## API surface
 
-**Notifications**: `POST /api/notifications/send` — internal only, called by Laravel with `{ task_id, user_id, event_type, details }`. Returns `202` immediately; the actual Brevo send happens in the background so a slow/failed email never blocks Laravel's request.
+**Notifications**: `POST /api/notifications/send` — internal only, called by Laravel with `{ task_id, user_id, event_type, details }`. Returns `202` immediately; the actual Brevo send happens in the background so a slow/failed email never blocks Laravel's request. Emails are sent as HTML (with a plain-text fallback) — see "HTML email templates" below.
 
 **Analytics** (Admin/Manager only; Manager scoped to own team by Laravel):
 - `GET /api/analytics/task-summary?team_id=&date_from=&date_to=` → `{ total_tasks, completed_tasks, pending_tasks, avg_completion_time }`
@@ -63,6 +63,10 @@ All three cache their result for 1 hour (in-memory, timestamp-based — no Redis
 
 All three use `withRetry` (exponential backoff, 3 attempts) around their Laravel calls so a transient network blip doesn't skip a whole run. On `SIGTERM`/`SIGINT`, the server stops accepting new cron triggers and waits for any run already in flight to finish before exiting (see `src/server.js`).
 
+## HTML email templates (bonus)
+
+All five notification templates (`task_assigned`, `task_status_changed`, `deadline_reminder`, `task_archived`, `daily_digest`) — plus the generic fallback for an unmapped `event_type` — now render as HTML, not just plain text. `buildNotification()` (`src/services/notificationTemplates.js`) returns `{ subject, text, html }`; `sendEmail()` (`src/services/brevo.js`) sends both `textContent` and `htmlContent` to Brevo (`textContent` alone if a caller doesn't supply `html`, so nothing breaks for any future template that skips it). The HTML is built with `renderEmail()` (`src/services/emailLayout.js`) — a small table-based, inline-styled layout (email clients strip `<style>` blocks) shared by every template, with all interpolated values passed through `escapeHtml()` so a task title can't inject markup into the email. The daily digest renders its task list as an actual `<ul>` instead of a dash-separated text block.
+
 ## Rate limiting
 
 `/api/notifications`, `/api/analytics`, and `/api/export` are all throttled via `express-rate-limit`: **60 requests/minute per IP**. Exceeding it returns `429` with `{ "message": "Too many requests, please try again later." }` and standard `RateLimit-*` headers.
@@ -81,7 +85,7 @@ See `/api-docs` once the server is running (generated from JSDoc comments via `s
 npm test
 ```
 
-26 Jest tests covering JWT/internal-token middleware (accept/reject paths), the in-memory cache's TTL behavior, notification template building, unauthenticated-access rejection on every protected route, rate limiting (429 after the limit, `RateLimit-*` headers, shared budget across routes, unaffected `/health`), and request/response logging (status/user captured, body never logged).
+33 Jest tests covering JWT/internal-token middleware (accept/reject paths), the in-memory cache's TTL behavior, notification template building (including HTML output, HTML-escaping of interpolated values, and the daily digest task list), the Brevo client (`htmlContent` forwarded when present, omitted when absent, skips sending with no API key), unauthenticated-access rejection on every protected route, rate limiting (429 after the limit, `RateLimit-*` headers, shared budget across routes, unaffected `/health`), and request/response logging (status/user captured, body never logged).
 
 ## Deployment
 

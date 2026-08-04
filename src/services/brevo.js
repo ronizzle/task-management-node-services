@@ -8,7 +8,7 @@ const BREVO_SEND_URL = 'https://api.brevo.com/v3/smtp/email';
  * the caller (background job in the notifications route) — a failed email
  * must never fail the HTTP response that triggered it.
  */
-export async function sendEmail({ to, subject, text }) {
+export async function sendEmail({ to, subject, text, html }) {
   if (!env.brevo.apiKey) {
     console.warn('[brevo] BREVO_API_KEY not set — skipping email send:', subject);
     return { skipped: true };
@@ -21,6 +21,7 @@ export async function sendEmail({ to, subject, text }) {
       to: [{ email: to }],
       subject,
       textContent: text,
+      ...(html ? { htmlContent: html } : {}),
     },
     {
       headers: {

@@ -27,11 +27,12 @@ export async function runDailyDigest() {
           .map((t) => `- [${t.priority}] ${t.title} (due ${t.due_date ?? 'no due date'})`)
           .join('\n');
 
-        const { subject, text } = buildNotification('daily_digest', {
+        const { subject, text, html } = buildNotification('daily_digest', {
+          tasks: userTasks,
           summary: `You have ${userTasks.length} incomplete task(s):\n${summary}`,
         });
 
-        await sendEmail({ to: user.email, subject, text });
+        await sendEmail({ to: user.email, subject, text, html });
       });
       sent += 1;
     } catch (err) {

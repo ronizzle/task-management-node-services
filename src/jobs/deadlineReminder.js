@@ -33,12 +33,12 @@ export async function runDeadlineReminder() {
         const { data: user } = await client.get(`/users/${task.assigned_to}`);
         if (!user?.email || !user.is_active) return;
 
-        const { subject, text } = buildNotification('deadline_reminder', {
+        const { subject, text, html } = buildNotification('deadline_reminder', {
           title: task.title,
           due_date: task.due_date,
         });
 
-        await sendEmail({ to: user.email, subject, text });
+        await sendEmail({ to: user.email, subject, text, html });
       });
       sent += 1;
     } catch (err) {

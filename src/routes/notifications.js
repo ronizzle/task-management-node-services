@@ -57,9 +57,9 @@ async function processNotification({ userId, eventType, details }) {
     throw new Error(`No email on file for user ${userId}`);
   }
 
-  const { subject, text } = buildNotification(eventType, details);
+  const { subject, text, html } = buildNotification(eventType, details);
 
-  await sendEmail({ to: user.email, subject, text });
+  await sendEmail({ to: user.email, subject, text, html });
 }
 
 export default router;
