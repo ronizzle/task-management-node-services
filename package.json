@@ -1,0 +1,30 @@
+{
+  "name": "task-management-node-services",
+  "version": "1.0.0",
+  "description": "Node.js/Express notifications, analytics, exports, and cron jobs for the Task Management & Analytics Platform",
+  "main": "src/server.js",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "axios": "^1.19.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "fast-csv": "^5.0.7",
+    "jsonwebtoken": "^9.0.3",
+    "node-cron": "^4.6.0"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
+  }
+}
