@@ -8,6 +8,22 @@ const router = Router();
 
 router.use(authenticateJwt, requireLaravelUser, requireAdminOrManager);
 
+/**
+ * @openapi
+ * /api/analytics/task-summary:
+ *   get:
+ *     tags: [Analytics]
+ *     summary: Task totals and average completion time for a team
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - { name: team_id, in: query, required: true, schema: { type: integer } }
+ *       - { name: date_from, in: query, schema: { type: string, format: date } }
+ *       - { name: date_to, in: query, schema: { type: string, format: date } }
+ *     responses:
+ *       200: { description: Task summary (cached 1hr) }
+ *       403: { description: Forbidden — team_member, or Manager outside their team }
+ *       422: { description: team_id missing }
+ */
 router.get('/task-summary', async (req, res) => {
   const { team_id: teamId, date_from: dateFrom, date_to: dateTo } = req.query;
 
@@ -42,6 +58,20 @@ router.get('/task-summary', async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/analytics/team-productivity:
+ *   get:
+ *     tags: [Analytics]
+ *     summary: Per-member task counts by status for a team
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - { name: team_id, in: query, required: true, schema: { type: integer } }
+ *     responses:
+ *       200: { description: Per-member productivity breakdown (cached 1hr) }
+ *       403: { description: Forbidden }
+ *       422: { description: team_id missing }
+ */
 router.get('/team-productivity', async (req, res) => {
   const { team_id: teamId } = req.query;
 
@@ -89,6 +119,21 @@ router.get('/team-productivity', async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/analytics/upcoming-deadlines:
+ *   get:
+ *     tags: [Analytics]
+ *     summary: Non-terminal tasks due within a time window for a team
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - { name: team_id, in: query, required: true, schema: { type: integer } }
+ *       - { name: within_hours, in: query, schema: { type: integer, default: 168 } }
+ *     responses:
+ *       200: { description: Upcoming-deadline tasks (cached 1hr) }
+ *       403: { description: Forbidden }
+ *       422: { description: team_id missing }
+ */
 router.get('/upcoming-deadlines', async (req, res) => {
   const { team_id: teamId, within_hours: withinHoursRaw } = req.query;
 

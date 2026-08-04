@@ -9,6 +9,34 @@ const router = Router();
 
 const EXPORT_COLUMNS = ['id', 'title', 'status', 'priority', 'assigned_to', 'due_date', 'created_at'];
 
+/**
+ * @openapi
+ * /api/export/tasks:
+ *   post:
+ *     tags: [Export]
+ *     summary: Export a team's tasks as a file stream
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [team_id]
+ *             properties:
+ *               team_id: { type: integer }
+ *               format: { type: string, enum: [csv, json, xlsx], default: csv }
+ *               filters:
+ *                 type: object
+ *                 properties:
+ *                   status: { type: string }
+ *                   priority: { type: string }
+ *                   assigned_to: { type: integer }
+ *     responses:
+ *       200: { description: File stream (csv/xlsx) or JSON array }
+ *       401: { description: Unauthenticated }
+ *       422: { description: team_id missing or invalid format }
+ */
 router.post('/tasks', authenticateJwt, async (req, res) => {
   const { team_id: teamId, format = 'csv', filters = {} } = req.body;
 

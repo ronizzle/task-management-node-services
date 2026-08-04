@@ -6,6 +6,30 @@ import { buildNotification } from '../services/notificationTemplates.js';
 
 const router = Router();
 
+/**
+ * @openapi
+ * /api/notifications/send:
+ *   post:
+ *     tags: [Notifications]
+ *     summary: Queue a notification email (internal — called by Laravel only)
+ *     security: [{ internalToken: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [user_id, event_type]
+ *             properties:
+ *               task_id: { type: integer, nullable: true }
+ *               user_id: { type: integer }
+ *               event_type: { type: string, example: task_assigned }
+ *               details: { type: object }
+ *     responses:
+ *       202: { description: Accepted for background processing }
+ *       401: { description: Invalid or missing internal service token }
+ *       422: { description: Missing user_id or event_type }
+ */
 router.post('/send', authenticateInternalToken, (req, res) => {
   const { task_id: taskId, user_id: userId, event_type: eventType, details } = req.body;
 

@@ -1,8 +1,10 @@
 import express from 'express';
 import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
 import notificationsRouter from './routes/notifications.js';
 import analyticsRouter from './routes/analytics.js';
 import exportRouter from './routes/export.js';
+import swaggerSpec from './config/swagger.js';
 
 export function createApp() {
   const app = express();
@@ -13,6 +15,9 @@ export function createApp() {
   app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
   });
+
+  app.get('/api-docs.json', (req, res) => res.json(swaggerSpec));
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
   app.use('/api/notifications', notificationsRouter);
   app.use('/api/analytics', analyticsRouter);
