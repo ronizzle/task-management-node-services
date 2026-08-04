@@ -7,16 +7,19 @@ import analyticsRouter from './routes/analytics.js';
 import exportRouter from './routes/export.js';
 import swaggerSpec from './config/swagger.js';
 
-const apiLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  limit: 60,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { message: 'Too many requests, please try again later.' },
-});
-
 export function createApp() {
   const app = express();
+
+  // Instantiated per app rather than at module scope so each createApp()
+  // call (e.g. one per test) gets its own counter store instead of sharing
+  // state with every other instance.
+  const apiLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many requests, please try again later.' },
+  });
 
   app.use(cors());
   app.use(express.json());

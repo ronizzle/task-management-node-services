@@ -77,7 +77,7 @@ See `/api-docs` once the server is running (generated from JSDoc comments via `s
 npm test
 ```
 
-20 Jest tests covering JWT/internal-token middleware (accept/reject paths), the in-memory cache's TTL behavior, notification template building, and unauthenticated-access rejection on every protected route.
+24 Jest tests covering JWT/internal-token middleware (accept/reject paths), the in-memory cache's TTL behavior, notification template building, unauthenticated-access rejection on every protected route, and rate limiting (429 after the limit, `RateLimit-*` headers, shared budget across routes, unaffected `/health`).
 
 ## Deployment
 
