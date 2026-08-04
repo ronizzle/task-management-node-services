@@ -63,6 +63,10 @@ All three cache their result for 1 hour (in-memory, timestamp-based — no Redis
 
 All three use `withRetry` (exponential backoff, 3 attempts) around their Laravel calls so a transient network blip doesn't skip a whole run. On `SIGTERM`/`SIGINT`, the server stops accepting new cron triggers and waits for any run already in flight to finish before exiting (see `src/server.js`).
 
+## Rate limiting
+
+`/api/notifications`, `/api/analytics`, and `/api/export` are all throttled via `express-rate-limit`: **60 requests/minute per IP**. Exceeding it returns `429` with `{ "message": "Too many requests, please try again later." }` and standard `RateLimit-*` headers.
+
 ## API docs (Swagger/OpenAPI)
 
 See `/api-docs` once the server is running (generated from JSDoc comments via `swagger-jsdoc` + `swagger-ui-express`).
