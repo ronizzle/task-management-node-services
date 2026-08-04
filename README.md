@@ -53,6 +53,17 @@ All three cache their result for 1 hour (in-memory, timestamp-based — no Redis
 
 **Export**: `POST /api/export/tasks` `{ team_id, format: csv|json|xlsx, filters }` → file stream (`fast-csv` for CSV, `exceljs` for XLSX).
 
+**Realtime**: `POST /api/realtime/broadcast` — internal only, called by Laravel with `{ room, event, payload }`. See "Real-time updates (Socket.IO, bonus)" below.
+
+## Real-time updates (Socket.IO, bonus)
+
+Live task/comment updates pushed to connected clients over Socket.IO, attached to the same HTTP server as the REST API (`src/server.js`).
+
+- **Auth handshake**: the client connects with `auth: { token }`, the same JWT Laravel issues and the REST API already validates. `src/realtime/socket.js` verifies it with the shared `JWT_SECRET` (HS256) at connect time — no token, no connection.
+- **Rooms**: client-directed via `join:task` / `leave:task` (task id) and `join:team` / `leave:team` (team id). Any authenticated socket can join any room by id — Node has no way to check per-resource team membership itself (see "Node has no direct DB access" in `plan.md`), so this is a step looser than the REST API's authorization. It's an acceptable tradeoff here because only change *notifications* (ids, titles, statuses — no task body/description) go out over the socket, and the same fields are visible in Laravel's own broadcast payload.
+- **Broadcast trigger**: Laravel's `App\Services\RealtimeBroadcaster` calls `POST /api/realtime/broadcast` (internal-token protected, same pattern as `/api/notifications/send`) after every relevant task/comment write; `broadcastToRoom()` then emits to that Socket.IO room. A failed/unreachable broadcast is caught and logged on the Laravel side — it never fails the underlying request.
+- **Events**: `task_created`, `task_updated`, `task_status_changed`, `task_deleted`, `task_archived` (to `team:{team_id}`; the last three also to `task:{task_id}`), `comment_created`, `comment_deleted` (to `task:{task_id}`).
+
 ## Scheduled jobs (node-cron)
 
 | Job | Schedule | What it does |
@@ -85,7 +96,7 @@ See `/api-docs` once the server is running (generated from JSDoc comments via `s
 npm test
 ```
 
-33 Jest tests covering JWT/internal-token middleware (accept/reject paths), the in-memory cache's TTL behavior, notification template building (including HTML output, HTML-escaping of interpolated values, and the daily digest task list), the Brevo client (`htmlContent` forwarded when present, omitted when absent, skips sending with no API key), unauthenticated-access rejection on every protected route, rate limiting (429 after the limit, `RateLimit-*` headers, shared budget across routes, unaffected `/health`), and request/response logging (status/user captured, body never logged).
+40 Jest tests covering JWT/internal-token middleware (accept/reject paths), the in-memory cache's TTL behavior, notification template building (including HTML output, HTML-escaping of interpolated values, and the daily digest task list), the Brevo client (`htmlContent` forwarded when present, omitted when absent, skips sending with no API key), unauthenticated-access rejection on every protected route, rate limiting (429 after the limit, `RateLimit-*` headers, shared budget across routes, unaffected `/health`), request/response logging (status/user captured, body never logged), and Socket.IO realtime (handshake rejects a missing/invalid JWT, accepts a valid one, room-scoped delivery via a real client/server pair, `/api/realtime/broadcast` internal-token guard and validation).
 
 ## Deployment
 

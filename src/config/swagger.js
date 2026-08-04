@@ -21,6 +21,7 @@ const spec = swaggerJsdoc({
       { name: 'Notifications', description: 'Internal endpoint called by Laravel' },
       { name: 'Analytics', description: 'Admin/Manager only, team-scoped for Managers' },
       { name: 'Export', description: 'Task export as CSV, JSON, or XLSX' },
+      { name: 'Realtime', description: 'Internal endpoint called by Laravel to trigger a Socket.IO broadcast' },
     ],
   },
   apis: ['./src/routes/*.js'],
