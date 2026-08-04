@@ -77,4 +77,9 @@ npm test
 
 ## Deployment
 
-Paused (Module 9) — see the umbrella repo's `plan.md`. Live URL will be added here once deployed.
+Live on Render: **https://task-management-node-services-u5bj.onrender.com/api**
+
+- Render Web Service, Node runtime. Build `npm install`, start `npm start`.
+- `LARAVEL_API_URL` points at the production Laravel URL; `JWT_SECRET` and `INTERNAL_SERVICE_TOKEN` match Laravel's values exactly. `PUBLIC_URL` is set so the Swagger UI "server" dropdown resolves correctly in production.
+- `BREVO_API_KEY`/`BREVO_SENDER_EMAIL`/`BREVO_SENDER_NAME` set for live transactional email.
+- Health check: `GET /health`.
