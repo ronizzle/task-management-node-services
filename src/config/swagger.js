@@ -10,7 +10,7 @@ const spec = swaggerJsdoc({
       description:
         'Notifications, analytics, exports, and cron jobs for the Task Management & Analytics Platform. Has no database of its own — reads/writes go through task-management-laravel-api.',
     },
-    servers: [{ url: `http://localhost:${env.port}`, description: 'Local' }],
+    servers: [{ url: env.publicUrl || `http://localhost:${env.port}`, description: env.publicUrl ? 'Current' : 'Local' }],
     components: {
       securitySchemes: {
         bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },

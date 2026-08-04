@@ -13,6 +13,9 @@ function required(name) {
 export const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT || '3000', 10),
+  // Public base URL of this service itself (e.g. its Render URL) — used only
+  // to make the Swagger UI's "server" dropdown correct in production.
+  publicUrl: process.env.PUBLIC_URL || '',
   jwtSecret: required('JWT_SECRET'),
   internalServiceToken: required('INTERNAL_SERVICE_TOKEN'),
   laravelApiUrl: process.env.LARAVEL_API_URL || 'http://localhost:8000/api',
