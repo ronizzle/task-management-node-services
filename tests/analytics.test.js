@@ -130,8 +130,20 @@ describe('analytics routes', () => {
       const bob = res.body.members.find((m) => m.user_id === BOB_ID);
       const carol = res.body.members.find((m) => m.user_id === CAROL_ID);
 
-      expect(bob).toMatchObject({ completed_tasks: 1, pending_tasks: 1, in_progress_tasks: 0 });
-      expect(carol).toMatchObject({ completed_tasks: 0, pending_tasks: 0, in_progress_tasks: 1 });
+      expect(bob).toMatchObject({
+        completed_tasks: 1,
+        pending_tasks: 1,
+        in_progress_tasks: 0,
+        completion_rate: 0.5,
+        avg_completion_time: 2,
+      });
+      expect(carol).toMatchObject({
+        completed_tasks: 0,
+        pending_tasks: 0,
+        in_progress_tasks: 1,
+        completion_rate: 0,
+        avg_completion_time: 0,
+      });
     });
   });
 

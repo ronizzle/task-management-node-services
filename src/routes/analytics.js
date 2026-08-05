@@ -63,7 +63,7 @@ router.get('/task-summary', async (req, res) => {
  * /api/analytics/team-productivity:
  *   get:
  *     tags: [Analytics]
- *     summary: Per-member task counts by status for a team
+ *     summary: Per-member task counts, completion rate, and avg completion time for a team
  *     security: [{ bearerAuth: [] }]
  *     parameters:
  *       - { name: team_id, in: query, required: true, schema: { type: integer } }
@@ -91,6 +91,7 @@ router.get('/team-productivity', async (req, res) => {
     ]);
 
     const byUser = new Map();
+    const tasksByUser = new Map();
     for (const member of team.members ?? []) {
       byUser.set(member.id, {
         user_id: member.id,
@@ -99,6 +100,7 @@ router.get('/team-productivity', async (req, res) => {
         in_progress_tasks: 0,
         pending_tasks: 0,
       });
+      tasksByUser.set(member.id, []);
     }
 
     for (const task of tasks) {
@@ -108,6 +110,16 @@ router.get('/team-productivity', async (req, res) => {
       if (task.status === 'completed') entry.completed_tasks += 1;
       else if (task.status === 'in_progress') entry.in_progress_tasks += 1;
       else if (task.status === 'pending') entry.pending_tasks += 1;
+
+      tasksByUser.get(task.assigned_to).push(task);
+    }
+
+    for (const [userId, entry] of byUser) {
+      const userTasks = tasksByUser.get(userId);
+      entry.completion_rate = userTasks.length === 0
+        ? 0
+        : Math.round((entry.completed_tasks / userTasks.length) * 100) / 100;
+      entry.avg_completion_time = averageCompletionHours(userTasks.filter((t) => t.status === 'completed'));
     }
 
     const result = { team_id: Number(teamId), members: [...byUser.values()] };
