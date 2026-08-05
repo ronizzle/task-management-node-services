@@ -136,13 +136,13 @@ router.get('/team-productivity', async (req, res) => {
  * /api/analytics/upcoming-deadlines:
  *   get:
  *     tags: [Analytics]
- *     summary: Non-terminal tasks due within a time window for a team
+ *     summary: Non-terminal tasks due within a time window for a team, grouped by assignee
  *     security: [{ bearerAuth: [] }]
  *     parameters:
  *       - { name: team_id, in: query, required: true, schema: { type: integer } }
  *       - { name: within_hours, in: query, schema: { type: integer, default: 168 } }
  *     responses:
- *       200: { description: Upcoming-deadline tasks (cached 1hr) }
+ *       200: { description: Upcoming-deadline tasks grouped by assignee (cached 1hr) }
  *       403: { description: Forbidden }
  *       422: { description: team_id missing }
  */
@@ -160,7 +160,10 @@ router.get('/upcoming-deadlines', async (req, res) => {
 
   try {
     const client = laravelClientForUser(req.token);
-    const tasks = await fetchAllTeamTasks(client, teamId);
+    const [tasks, team] = await Promise.all([
+      fetchAllTeamTasks(client, teamId),
+      fetchTeamWithMembers(client, teamId),
+    ]);
 
     const now = Date.now();
     const horizon = now + withinHours * 60 * 60 * 1000;
@@ -173,7 +176,9 @@ router.get('/upcoming-deadlines', async (req, res) => {
       return due >= now && due <= horizon;
     });
 
-    const result = { team_id: Number(teamId), within_hours: withinHours, tasks: upcoming };
+    const members = groupTasksByAssignee(upcoming, team.members ?? []);
+
+    const result = { team_id: Number(teamId), within_hours: withinHours, members };
 
     setCached(cacheKey, result);
     res.json({ ...result, cached: false });
@@ -204,6 +209,21 @@ function averageCompletionHours(completedTasks) {
   }, 0);
 
   return Math.round((totalHours / completedTasks.length) * 100) / 100;
+}
+
+function groupTasksByAssignee(tasks, teamMembers) {
+  const namesById = new Map(teamMembers.map((m) => [m.id, m.name]));
+  const byUser = new Map();
+
+  for (const task of tasks) {
+    const userId = task.assigned_to ?? null;
+    if (!byUser.has(userId)) {
+      byUser.set(userId, { user_id: userId, name: namesById.get(userId) ?? null, tasks: [] });
+    }
+    byUser.get(userId).tasks.push(task);
+  }
+
+  return [...byUser.values()];
 }
 
 function forwardError(err, res) {

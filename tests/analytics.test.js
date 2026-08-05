@@ -148,13 +148,16 @@ describe('analytics routes', () => {
   });
 
   describe('GET /api/analytics/upcoming-deadlines', () => {
-    it('only includes non-terminal tasks due within the default 7-day window', async () => {
+    it('only includes non-terminal tasks due within the default 7-day window, grouped by assignee', async () => {
       const res = await request(app)
         .get('/api/analytics/upcoming-deadlines?team_id=1')
         .set('Authorization', `Bearer ${tokenFor(ADMIN_ID)}`);
 
       expect(res.status).toBe(200);
-      expect(res.body.tasks.map((t) => t.id)).toEqual([2]);
+      expect(res.body.members).toEqual([
+        { user_id: BOB_ID, name: 'Bob', tasks: expect.arrayContaining([expect.objectContaining({ id: 2 })]) },
+      ]);
+      expect(res.body.members[0].tasks).toHaveLength(1);
     });
 
     it('respects a wider within_hours window', async () => {
@@ -162,7 +165,11 @@ describe('analytics routes', () => {
         .get(`/api/analytics/upcoming-deadlines?team_id=1&within_hours=${41 * 24}`)
         .set('Authorization', `Bearer ${tokenFor(ADMIN_ID)}`);
 
-      expect(res.body.tasks.map((t) => t.id).sort()).toEqual([2, 3]);
+      const idsByMember = res.body.members
+        .flatMap((m) => m.tasks)
+        .map((t) => t.id)
+        .sort();
+      expect(idsByMember).toEqual([2, 3]);
     });
   });
 });
