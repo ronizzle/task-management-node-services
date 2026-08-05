@@ -50,3 +50,59 @@ describe('POST /internal/jobs/daily-digest', () => {
     expect(res.body).toEqual({ sent: 1, failed: 0 });
   });
 });
+
+function laravelRoutesDueSoon() {
+  return [
+    { method: 'GET', test: (p) => p === '/api/teams', handler: () => ({ status: 200, body: page([{ id: 1, name: 'Engineering' }]) }) },
+    {
+      method: 'GET',
+      test: (p) => p === '/api/teams/1/tasks',
+      handler: () => ({
+        status: 200,
+        body: page([
+          {
+            id: 'A',
+            status: 'pending',
+            assigned_to: 2,
+            due_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          },
+        ]),
+      }),
+    },
+    {
+      method: 'GET',
+      test: (p) => /^\/api\/users\/\d+$/.test(p),
+      handler: ({ pathname }) => ({
+        status: 200,
+        body: { id: Number(pathname.split('/').pop()), email: `user${pathname.split('/').pop()}@test.com`, is_active: true },
+      }),
+    },
+  ];
+}
+
+describe('POST /internal/jobs/deadline-reminder', () => {
+  let server;
+  let app;
+
+  beforeAll(async () => {
+    server = await startFakeLaravel(laravelRoutesDueSoon());
+    app = createApp();
+  });
+
+  afterAll(() => stopFakeLaravel(server));
+
+  it('rejects a request with the wrong internal token', async () => {
+    const res = await request(app).post('/internal/jobs/deadline-reminder').set('X-Internal-Token', 'wrong');
+
+    expect(res.status).toBe(401);
+  });
+
+  it('runs the reminder synchronously and reports sent/failed counts', async () => {
+    const res = await request(app)
+      .post('/internal/jobs/deadline-reminder')
+      .set('X-Internal-Token', process.env.INTERNAL_SERVICE_TOKEN);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ sent: 1, failed: 0 });
+  });
+});
