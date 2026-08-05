@@ -6,6 +6,7 @@ import notificationsRouter from './routes/notifications.js';
 import analyticsRouter from './routes/analytics.js';
 import exportRouter from './routes/export.js';
 import realtimeRouter from './routes/realtime.js';
+import jobsRouter from './routes/jobs.js';
 import swaggerSpec from './config/swagger.js';
 import { requestLogger } from './middleware/requestLogger.js';
 
@@ -38,6 +39,7 @@ export function createApp() {
   app.use('/api/analytics', apiLimiter, analyticsRouter);
   app.use('/api/export', apiLimiter, exportRouter);
   app.use('/api/realtime', apiLimiter, realtimeRouter);
+  app.use('/internal/jobs', apiLimiter, jobsRouter);
 
   app.use((req, res) => {
     res.status(404).json({ message: 'Not found.' });
